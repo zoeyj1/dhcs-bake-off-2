@@ -1,0 +1,69 @@
+<!-- Reminder: do *not* edit this file. (The one exception is that you may un-comment line 64 if you want to use the svg.js library.) -->
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Bakeoff 2</title>
+		<link rel="stylesheet" type="text/css" href="CSS/main.css">
+		<style type="text/css">
+		/*		If you want to add CSS, do it in the linked CSS file. ([project folder]/CSS/main.css)	*/
+			body {
+				height: 100vh;
+				width: 100vw;
+				border: none;
+				margin: 0px;
+				text-align: center;
+				display: flex;
+				flex-direction: row;
+				align-items: stretch;
+				justify-content: space-between;
+				border-left: 6px #fff solid;
+			}
+			body.active {
+				border-left: 6px #f06 solid;
+			}
+			#main {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				justify-content: space-around;
+				flex-grow:4;
+			}
+			#sidebar {
+				border-left: 1px black solid;
+				padding: 1em;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+			}
+			footer {
+				width: 100vw;
+				text-align: center;
+				position: absolute;
+				bottom: 0px;
+				padding: 0.75em;
+				border-top: 1px #ddd solid;
+			}
+			canvas, svg, .display {
+				border: 1px #ddd solid;
+				margin: 1em;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="main">
+			<div id="applicationArea"></div>
+		</div>
+		<div id="sidebar">
+			<div id="taskIndicator"></div>
+			<button id="trialButton">start trial</button>
+			<label for="realTrial" style="padding-left:0.5em">Count this trial? <input type="checkbox" id="realTrial"></label>
+			<label for="saveData" style="padding-left:0.5em">Download this trial? <input type="checkbox" id="saveData"></label>
+		</div>
+	</body>
+	<script src="./js/svg.js"></script>
+	<script src="./js/svg.draggable.js"></script>
+	<script src="./js/framework.js"></script>
+	<script src="./js/main.js"></script>
+</html>
