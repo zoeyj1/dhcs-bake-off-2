@@ -1,1 +1,21 @@
 /*Any student-written CSS should go in this file.*/
+
+#applicationArea {
+    margin-left: 150px;
+    margin-top: 10px;
+}
+
+#controls {
+    display: flex;
+    flex-direction: column; /* stacks elements in controls on top of each other in a column */
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin-left: 20px;
+    margin-top: 50px;
+    font-size: 15px;
+}
+
+input[type="range"] {
+    margin-bottom: 25px;
+}

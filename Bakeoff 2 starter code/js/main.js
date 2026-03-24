@@ -17,12 +17,8 @@ window.addEventListener("load", (e) => {
     // Whatever it is, it should call the trial.submitPosition() method.
     // Within the "trackpad + click" constraints, this can be whatever you want it to be (e.g. a button, some kind of swipe gesture, double-clicking on the square itself...). Consider what you've learned about Fitts's Law. :)
     // Here is a bare version, just using an HTML button:
-    let submitButton = document.createElement("button");
-    document.getElementById("applicationArea").appendChild(submitButton);
-    submitButton.innerText = "yes, that looks good";
-    submitButton.addEventListener("click", (e) => {
-        trial.submitPosition();
-    });
+
+
     // =========== /end required =========== 
 
     
@@ -43,30 +39,105 @@ window.addEventListener("load", (e) => {
     box.fill("#11eaea");
 
     
-    // ====== Manipulating them =============
-    // For example, you could add a button that just randomly re-sizes/positions the box:
-    let randomnessButton = document.createElement("button");
-    document.getElementById("applicationArea").appendChild(randomnessButton);
-    randomnessButton.innerText = "go wild";
-    randomnessButton.addEventListener("click", (e) => {
-        // To change the box's size, I recommend box.size(), like this:
-        let size = randomBetween(10, 100); // randomBetween function is provided by the framework, because I use it there myself
-        box.size(size, size); // two arguments because the first is width and the second is height. But these are squares, so I repeat it.
-        // (there is also box.scale(number), but it will change the local coordinates, affecting the translation/rotations as well)
-        // For translation and rotation, I recommend box.transform(), https://svgjs.dev/docs/3.2/manipulating/#transforming:
-        let rotation = randomBetween(0, 90);
-        let position = { x: randomBetween(size, canvasSize - size), y: randomBetween(size, canvasSize - size) };
-        box.transform({ rotate: rotation, position: position, origin: "center" });
-        // ...and you do have to do both of them in the *same* transform() call. Otherwise, things get weird: if you do the rotation before the position, the position will be in the new, rotated coordinates; if you do the position before the rotation, the position overrides/re-sets the rotation.
-    });
+    // // ====== Manipulating them =============
+    // // For example, you could add a button that just randomly re-sizes/positions the box:
+    // let randomnessButton = document.createElement("button");
+    // document.getElementById("applicationArea").appendChild(randomnessButton);
+    // randomnessButton.innerText = "go wild";
+    // randomnessButton.addEventListener("click", (e) => {
+    //     // To change the box's size, I recommend box.size(), like this:
+    //     let size = randomBetween(10, 100); // randomBetween function is provided by the framework, because I use it there myself
+    //     box.size(size, size); // two arguments because the first is width and the second is height. But these are squares, so I repeat it.
+    //     // (there is also box.scale(number), but it will change the local coordinates, affecting the translation/rotations as well)
+    //     // For translation and rotation, I recommend box.transform(), https://svgjs.dev/docs/3.2/manipulating/#transforming:
+    //     let rotation = randomBetween(0, 90);
+    //     let position = { x: randomBetween(size, canvasSize - size), y: randomBetween(size, canvasSize - size) };
+    //     box.transform({ rotate: rotation, position: position, origin: "center" });
+    //     // ...and you do have to do both of them in the *same* transform() call. Otherwise, things get weird: if you do the rotation before the position, the position will be in the new, rotated coordinates; if you do the position before the rotation, the position overrides/re-sets the rotation.
+    // });
 
+    let controls = document.createElement("div");
+    controls.id = "controls";
+    document.getElementById("applicationArea").appendChild(controls);
+
+    let label_R = document.createElement("label");
+    label_R.innerText = "Rotation";
+    document.getElementById("controls").appendChild(label_R);
+
+    let slider_R = document.createElement("input");
+    slider_R.type = "range";
+    slider_R.min = 0; 
+    slider_R.max = 360;
+    slider_R.value = 45;
+    document.getElementById("controls").appendChild(slider_R);
+    slider_R.addEventListener("input", (e) => {
+        let bounding = box.rbox(svg);
+        box.transform({ rotate: slider_R.value, position: { x: bounding.cx, y: bounding.cy }, origin: "center" });
+        // ...and you do have to do both of them in the *same* transform() call. Otherwise, things get weird: if you do the rotation before the position, the position will be in the new, rotated coordinates; if you do the position before the rotation, the position overrides/re-sets the rotation.
+    })
+
+
+    let label_X = document.createElement("label");
+    label_X.innerText = "X Position";
+    document.getElementById("controls").appendChild(label_X);
+
+    let slider_X = document.createElement("input");
+    slider_X.type = "range";
+    slider_X.min = -20; 
+    slider_X.max = canvasSize + 20;
+    slider_X.value = canvasSize / 2;
+    document.getElementById("controls").appendChild(slider_X);
+    slider_X.addEventListener("input", (e) => {
+        let bounding = box.rbox(svg);
+        let x_coord = slider_X.value;
+        box.transform({ rotate: slider_R.value, position: { x: x_coord, y: bounding.cy }, origin: "center" });
+        // ...and you do have to do both of them in the *same* transform() call. Otherwise, things get weird: if you do the rotation before the position, the position will be in the new, rotated coordinates; if you do the position before the rotation, the position overrides/re-sets the rotation.
+    })
+
+
+    let label_Y = document.createElement("label");
+    label_Y.innerText = "Y Position";
+    document.getElementById("controls").appendChild(label_Y);
+
+    let slider_Y = document.createElement("input");
+    slider_Y.type = "range";
+    slider_Y.min = 0;
+    slider_Y.max = canvasSize;
+    slider_Y.value = canvasSize / 2;
+    document.getElementById("controls").appendChild(slider_Y);
+    slider_Y.addEventListener("input", (e) => {
+        let bounding = box.rbox(svg);
+        let y_coord = canvasSize - slider_Y.value; // more intuitive
+        box.transform({ rotate: slider_R.value, position: { x: bounding.cx, y: y_coord }, origin: "center" });
+    })
+
+
+    let label_D = document.createElement("label");
+    label_D.innerText = "Scale";
+    document.getElementById("controls").appendChild(label_D);
+
+    let slider_D = document.createElement("input");
+    let bounding = box.rbox(svg);
+    slider_D.type = "range";
+    slider_D.min = 10;
+    slider_D.max = 400;
+    slider_D.value = bounding.width;
+    document.getElementById("controls").appendChild(slider_D);
+    slider_D.addEventListener("input", (e) => {
+        let bounding = box.rbox(svg);
+        box.size(slider_D.value, slider_D.value);
+        box.transform({ rotate: slider_R.value, position: { x: bounding.cx, y: bounding.cy }, origin: "center" });
+    })
     
     // ====== SVG element events =============
     // You can also add event handlers to svg elements. The syntax is similar (but not identical, unfortunately) to the baseline HTML event handlers: https://svgjs.dev/docs/3.2/events/#element-on
-    box.on("click", () => {
-        console.log("I'm being clicked!");
+    box.on("dblclick", () => {
+        trial.submitPosition();
     });
 
+    let zoey_prototype_label = document.createElement("p");
+    zoey_prototype_label.innerText = "Use the sliders to alter X/Y/Rotation/Scale. You may also drag the square. \n Double click the square to advance to the next trial."
+    document.getElementById("applicationArea").appendChild(zoey_prototype_label);
     
     // ====== Dragging elements =============
     // Because the "draggable" plugin is included, you can also set any svg element (shapee or group) to "draggable" -- this does exactly what you hope it does (i.e., it makes it so that you can click and drag the element). 
