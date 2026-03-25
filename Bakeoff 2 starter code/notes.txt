@@ -1,0 +1,19 @@
+hmmge
+
+realized that having a click for the center is not actually that useful when 
+the other square is opaque, i didnt realize that it wasnt going to stay translucent
+
+hmm
+
+will have to iterate
+
+thinking maybe 
+
+2 clicks for a side? and then it calculates a square like that
+- accounts for size and angle here
+- easier for the user to see the corners of the target square relative to the grid
+
+and then the user can move the square??
+
+maybe uh, track mouse movement relative to the line to decide which side 
+the square should be drawn on

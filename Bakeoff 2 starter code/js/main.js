@@ -40,7 +40,7 @@ window.addEventListener("load", (e) => {
     // You could add other background-y things to this group. You also may remove the grid lines with grid.clear() (but I can't personally think of a good reason why you would want to?).
     // And applicationElements.box is the box itself. :) You can change it with any of the things at https://svgjs.dev/docs/3.2/manipulating/
     let box = applicationElements.box;
-    box.fill("#11eaea");
+    box.fill('#00ff2a').opacity(.8);
 
     
     // ====== Manipulating them =============
@@ -63,23 +63,23 @@ window.addEventListener("load", (e) => {
     
     // ====== SVG element events =============
     // You can also add event handlers to svg elements. The syntax is similar (but not identical, unfortunately) to the baseline HTML event handlers: https://svgjs.dev/docs/3.2/events/#element-on
-    box.on("click", () => {
-        console.log("I'm being clicked!");
-    });
+    // box.on("click", () => {
+    //     console.log("I'm being clicked!");
+    // });
 
     
     // ====== Dragging elements =============
     // Because the "draggable" plugin is included, you can also set any svg element (shapee or group) to "draggable" -- this does exactly what you hope it does (i.e., it makes it so that you can click and drag the element). 
     // Documentation here: https://github.com/svgdotjs/svg.draggable.js ... but it really is just this:
-    box.draggable();
-    // Of course, once the box has been dragged, you might want to know its location (e.g. in case you want to move anything else along with it). In this example, I add a new rectangle to the svg drawing:
-    let follower = svg.rect(10, 10).fill("none").stroke("#ff0000");
-    // ...and then I update its location whenever the box is being dragged:
-    box.on("dragmove", () => {
-        let bounding = box.rbox(svg); // "rbox" is the bounding box in coordinates relative to the function's argument (in this case, the overall svg drawing area)
-        follower.size(bounding.width, bounding.height); // .size changes the size of the rectangle, as we saw above
-        follower.transform({ position: { x: bounding.cx, y: bounding.cy }, origin: "center" }); // "cx"/"cy" are the x and y positions of the center point of the shape
-    });
+    // box.draggable();
+    // // Of course, once the box has been dragged, you might want to know its location (e.g. in case you want to move anything else along with it). In this example, I add a new rectangle to the svg drawing:
+    // let follower = svg.rect(10, 10).fill("none").stroke("#ff0000");
+    // // ...and then I update its location whenever the box is being dragged:
+    // box.on("dragmove", () => {
+    //     let bounding = box.rbox(svg); // "rbox" is the bounding box in coordinates relative to the function's argument (in this case, the overall svg drawing area)
+    //     follower.size(bounding.width, bounding.height); // .size changes the size of the rectangle, as we saw above
+    //     follower.transform({ position: { x: bounding.cx, y: bounding.cy }, origin: "center" }); // "cx"/"cy" are the x and y positions of the center point of the shape
+    // });
 
     
     // ====== Trial engine events =============
@@ -96,4 +96,111 @@ window.addEventListener("load", (e) => {
     trial.addEventListener("newTask", () => {
         console.log(trial.getTaskNumber());
     });
+
+    // MY FAULT, THIS DRAWS A POLYGON, i was not the critical thinker
+    // click 4x for each corner of the box to draw a box
+  //   let arrClicks = []; // does js use arrays or lists??? this is prolly a list so my naming syntax is cooked </3
+  //   svg.on("click", (e) => {
+  //     const {x, y} = svg.point(e.clientX, e.clientY);
+  //     arrClicks.push({x, y});
+      
+  //     svg.circle(5).fill("#000").move(x - 2.5, y - 2.5); 
+
+  //     if (arrClicks.length === 4) {
+  //       // this is wild, taking in a formatted string instead of idk a list of tuples
+  //       let strPoints = arrClicks.map(p => `${p.x},${p.y}`).join(' ');
+
+  //       let newBox = svg.polygon(strPoints)
+  //           .fill('#11eaea')
+  //           .stroke({ width: 2, color: '#333' });
+
+  //       newBox.draggable();
+  //       arrClicks = []; 
+  //   }
+  // });
+
+  let boolDraw = true;
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "e") {
+      boolDraw = !boolDraw;
+    }
+  });
+
+  let instructions = svg.text(
+      `How to play:
+      1. first click is center of box
+      2. corner of the box follows your mouse
+      3. second click locks the box in place
+      4. press e to toggle between drawing and dragging`)
+      .move(20, 20)        
+      .fill('#000000');        
+
+  instructions.front();
+
+  let pointCentre = null;
+  let dots = [];
+  svg.on("click", (e) => {
+    const {x, y} = svg.point(e.clientX, e.clientY);
+    if (!boolDraw) return;
+
+    if (!pointCentre && boolDraw) {
+      
+      svg.find('rect').remove(); 
+      let dot = svg.circle(4).center(x, y).fill('#ff0000');
+      dots.push(dot);
+      pointCentre = {x, y};
+      box = svg.rect(1, 1).fill('#11eaea').opacity(0.3);
+      console.log(box);
+    } else {
+      // let halfSide = Math.max(Math.abs(x - pointCentre.x), Math.abs(y - pointCentre.y));
+      //   let fullSide = halfSide * 2;
+
+        // https://svgjs.dev/docs/3.2/manipulating/
+        // box = svg.rect(fullSide, fullSide)
+        //     .move(pointCentre.x - halfSide, pointCentre.y - halfSide)
+        //     .fill('#11eaea')
+            // .stroke({ width: 2, color: '#000' }); //kinda ugly idk, but maybe good UI?
+        
+        console.log(box);
+        box.fill('#00ff2a').opacity(.8);
+
+        dots.forEach(dot => dot.remove());
+        dots = [];
+
+        box.draggable();
+
+        pointCentre = null; 
+        box = null;
+    }
+  });
+
+  svg.on("mousemove", (e) => {
+    if (pointCentre && box && boolDraw) {
+      const { x, y } = svg.point(e.clientX, e.clientY);
+
+      let dx = x - pointCentre.x;
+      let dy = y - pointCentre.y;
+
+            // 1. Get the actual distance to the mouse (the diagonal)
+      let diagonal = Math.sqrt(dx * dx + dy * dy);
+      
+      // 2. The EXACT side length to make the corner hit that distance
+      // side = diagonal / cos(45) -> which is diagonal * 0.7071...
+      let side = diagonal * Math.sqrt(2); 
+
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI) - 45;
+
+      box.size(side, side)
+         .center(pointCentre.x, pointCentre.y)
+         .transform({ rotate: angle, origin: "center" });
+    }
+  });
+
+  let follower = svg.rect(10, 10).fill("none").stroke("#ff0000");
+  // ...and then I update its location whenever the box is being dragged:
+  box.on("dragmove", () => {
+      let bounding = box.rbox(svg); // "rbox" is the bounding box in coordinates relative to the function's argument (in this case, the overall svg drawing area)
+      follower.size(bounding.width, bounding.height); // .size changes the size of the rectangle, as we saw above
+      follower.transform({ position: { x: bounding.cx, y: bounding.cy }, origin: "center" }); // "cx"/"cy" are the x and y positions of the center point of the shape
+  });
 });
