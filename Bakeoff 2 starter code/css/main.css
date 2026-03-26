@@ -1,1 +1,90 @@
-/*Any student-written CSS should go in this file.*/
+/* Any student-written CSS should go in this file. */
+
+#applicationArea {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.submit-button {
+    margin-top: 0.5rem;
+}
+
+#strategyPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    width: 220px;
+}
+
+#strategyPanel h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+#strategyStatus {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.35;
+}
+
+#strategyButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.strategy-button {
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #0a7c7c;
+    background: #ffffff;
+    color: #0a5555;
+    cursor: pointer;
+    font: inherit;
+}
+
+.strategy-button.active {
+    background: #d8f4f4;
+    border-color: #0a5555;
+    font-weight: 600;
+}
+
+.strategy-button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+#strategyControlsHost {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.strategy-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.strategy-help {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+}
+
+.slider-group input[type="range"] {
+    width: 100%;
+}
+
+.hidden {
+    display: none;
+}
