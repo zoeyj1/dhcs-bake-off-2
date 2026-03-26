@@ -5,7 +5,6 @@ const tasksLength = 10;
 window.addEventListener("load", () => {
     const trial = new Trial(tasksLength, "teamName", true);
     const applicationArea = document.getElementById("applicationArea");
-    const sidebar = document.getElementById("sidebar");
 
     const submitButton = document.createElement("button");
     submitButton.innerText = "yes, that looks good";
@@ -17,7 +16,7 @@ window.addEventListener("load", () => {
 
     const strategyPanel = document.createElement("section");
     strategyPanel.id = "strategyPanel";
-    sidebar.appendChild(strategyPanel);
+    applicationArea.appendChild(strategyPanel);
 
     const strategyHeading = document.createElement("h3");
     strategyHeading.innerText = "Choose Strategy";
