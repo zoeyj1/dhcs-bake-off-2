@@ -21,6 +21,24 @@
     width: 220px;
 }
 
+#summaryPanel {
+    align-self: flex-start;
+    margin: 1rem 0 0 1rem;
+    width: 220px;
+}
+
+#summaryPanel h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+#summaryBody {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
 #strategyPanel h3 {
     margin: 0;
     font-size: 1rem;

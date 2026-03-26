@@ -34,9 +34,23 @@ window.addEventListener("load", () => {
     strategyControlsHost.id = "strategyControlsHost";
     strategyPanel.appendChild(strategyControlsHost);
 
+    const summaryPanel = document.createElement("section");
+    summaryPanel.id = "summaryPanel";
+    summaryPanel.className = "hidden";
+    applicationArea.appendChild(summaryPanel);
+
+    const summaryHeading = document.createElement("h3");
+    summaryHeading.innerText = "Trial Summary";
+    summaryPanel.appendChild(summaryHeading);
+
+    const summaryBody = document.createElement("p");
+    summaryBody.id = "summaryBody";
+    summaryPanel.appendChild(summaryBody);
+
     const applicationElements = trial.getElements();
     const svg = applicationElements.svg;
     const box = applicationElements.box;
+    const boxGroup = box.parent();
 
     box.fill("#11eaea");
     box.stroke({ width: 2, color: "#0a7c7c" });
@@ -120,20 +134,15 @@ window.addEventListener("load", () => {
     let activeStrategyId = null;
     let taskReadyForSelection = false;
     let taskStrategyLocked = false;
+    let completedTrialSummaryVisible = false;
 
     function applyTransform(nextTransform) {
         transformState = copyTransform(nextTransform);
-
-        const topLeftX = transformState.cx - (transformState.size / 2);
-        const topLeftY = transformState.cy - (transformState.size / 2);
-
+        box.untransform();
         box.size(transformState.size, transformState.size);
-        box.move(topLeftX, topLeftY);
-        box.transform({
-            rotate: transformState.rotation,
-            ox: transformState.cx,
-            oy: transformState.cy,
-        });
+        box.center(0, 0);
+        box.rotate(transformState.rotation, 0, 0);
+        boxGroup.cx(transformState.cx).cy(transformState.cy);
 
         if (activeStrategy && typeof activeStrategy.refresh === "function") {
             activeStrategy.refresh();
@@ -141,10 +150,7 @@ window.addEventListener("load", () => {
     }
 
     function syncTransformFromBox() {
-        transformState = readTransformFromBox();
-        if (activeStrategy && typeof activeStrategy.refresh === "function") {
-            activeStrategy.refresh();
-        }
+        applyTransform(readTransformFromBox());
     }
 
     function getTransform() {
@@ -196,6 +202,51 @@ window.addEventListener("load", () => {
         });
     }
 
+    function hideTrialSummary() {
+        completedTrialSummaryVisible = false;
+        summaryPanel.classList.add("hidden");
+    }
+
+    function showTrialSummary() {
+        const entries = trial.trialData || [];
+        if (!entries.length) {
+            summaryBody.innerText = "No task data was recorded.";
+            summaryPanel.classList.remove("hidden");
+            completedTrialSummaryVisible = true;
+            return;
+        }
+
+        const totals = entries.reduce((running, entry) => {
+            running.time += entry.time;
+            running.distance += entry.score.distanceFactor;
+            running.scale += entry.score.scaleFactor;
+            running.rotation += entry.score.rotationFactor;
+            return running;
+        }, { time: 0, distance: 0, scale: 0, rotation: 0 });
+
+        const count = entries.length;
+        const averageTimeMs = totals.time / count;
+        const averageDistance = totals.distance / count;
+        const averageScale = totals.scale / count;
+        const averageRotation = totals.rotation / count;
+
+        summaryBody.innerText =
+            `Tasks completed: ${count}\n` +
+            `Average time: ${(averageTimeMs / 1000).toFixed(2)} s\n` +
+            `Average distance factor: ${averageDistance.toFixed(3)}\n` +
+            `Average scale factor: ${averageScale.toFixed(3)}\n` +
+            `Average rotation factor: ${averageRotation.toFixed(3)}`;
+        summaryPanel.classList.remove("hidden");
+        completedTrialSummaryVisible = true;
+        console.log("Trial summary:", {
+            tasksCompleted: count,
+            averageTimeMs,
+            averageDistanceFactor: averageDistance,
+            averageScaleFactor: averageScale,
+            averageRotationFactor: averageRotation,
+        });
+    }
+
     function createDirectManipulationStrategy() {
         const cornerSigns = [
             { x: -1, y: -1 },
@@ -218,6 +269,7 @@ window.addEventListener("load", () => {
         strategyControlsHost.appendChild(panel);
 
         const overlay = svg.group().attr({ "pointer-events": "none" });
+        overlay.opacity(0);
         const outlineEdges = [
             overlay.line(0, 0, 0, 0).stroke({ width: 1.5, color: "#136f63" }),
             overlay.line(0, 0, 0, 0).stroke({ width: 1.5, color: "#136f63" }),
@@ -786,6 +838,7 @@ window.addEventListener("load", () => {
     function resetTaskSelectionState() {
         deactivateActiveStrategy();
         hideStrategyControls();
+        hideTrialSummary();
         syncTransformFromBox();
         taskReadyForSelection = true;
         taskStrategyLocked = false;
@@ -805,11 +858,23 @@ window.addEventListener("load", () => {
     applyTransform(transformState);
     disableStrategySelection("Start a trial to choose a strategy.");
 
+    trial.addEventListener("start", () => {
+        hideTrialSummary();
+    });
+
     trial.addEventListener("newTask", () => {
         resetTaskSelectionState();
     });
 
+    trial.addEventListener("testOver", () => {
+        setStatus("Trial complete. Review the summary below.");
+        showTrialSummary();
+    });
+
     trial.addEventListener("stop", () => {
-        disableStrategySelection("Start a trial to choose a strategy.");
+        const statusMessage = completedTrialSummaryVisible
+            ? "Trial complete. Start another trial to run again."
+            : "Start a trial to choose a strategy.";
+        disableStrategySelection(statusMessage);
     });
 });
