@@ -4,8 +4,8 @@ const tasksLength = 10;
 
 window.addEventListener("load", () => {
     const trial = new Trial(tasksLength, "teamName", true);
-    const applicationArea = document.getElementById("applicationArea");
 
+    const applicationArea = document.getElementById("applicationArea");
     const submitButton = document.createElement("button");
     submitButton.innerText = "yes, that looks good";
     submitButton.className = "submit-button";
@@ -52,8 +52,104 @@ window.addEventListener("load", () => {
     const box = applicationElements.box;
     const boxGroup = box.parent();
 
+    // START: Grid Marking Feature
+
+    // Draw bolder lines on top of the existing grid
+    // Thickest lines
+    [150, 300, 450].forEach(pos => {
+        svg.line(0, pos, 600, pos).stroke({ width: 2, color: "#666" });
+        svg.line(pos, 0, pos, 600).stroke({ width: 2, color: "#666" });
+    });
+
+    // 2-square boundaries
+    [75, 225, 375, 525].forEach(pos => {
+        svg.line(0, pos, 600, pos).stroke({ width: 0.7, color: "#666" });
+        svg.line(pos, 0, pos, 600).stroke({ width: 0.7, color: "#666" });
+    });
+
     box.fill("#11eaea");
     box.stroke({ width: 2, color: "#0a7c7c" });
+    boxGroup.front();
+
+
+    // Add the mark button
+    const markButton = document.createElement("button");
+    markButton.innerText = "Mark Lines";
+    markButton.className = "submit-button";
+    const svgNode = svg.node;
+    svgNode.insertAdjacentElement("afterend", markButton);
+
+    const gridPositions = [];
+    for (let i = 1; i < 32; i++) {
+        gridPositions.push(Math.round(600 / 32 * i));
+    }
+
+    const closestPosition = (value) => {
+        return gridPositions.reduce((a, b) => Math.abs(b - value) < Math.abs(a - value) ? b : a);
+    };
+
+    let markingMode = null; // null, "vertical", "horizontal"
+    let markedVertical = null;
+
+    const previewLine = svg.line(0, 0, 0, 0)
+        .stroke({ width: 1.5, color: "red", dasharray: "6,4" })
+        .opacity(0);
+
+    const placedLines = svg.group();
+    boxGroup.front();
+
+    markButton.addEventListener("click", () => {
+        if (markingMode !== null) {
+            markingMode = null;
+            markedVertical = null;
+            previewLine.opacity(0);
+            markButton.innerText = "Mark Lines";
+            return;
+        }
+        markingMode = "vertical";
+        markButton.innerText = "Cancel Marking";
+    });
+
+    svg.on("mousemove", (event) => {
+        if (!markingMode) return;
+        const point = svg.point(event.clientX, event.clientY);
+
+        if (markingMode === "vertical") {
+            const x = closestPosition(point.x);
+            previewLine.plot(x, 0, x, 600).stroke({ color: "red", dasharray: "6,4" }).opacity(1);
+        } else if (markingMode === "horizontal") {
+            const y = closestPosition(point.y);
+            previewLine.plot(0, y, 600, y).stroke({ color: "#2255ff", dasharray: "6,4" }).opacity(1);
+        }
+    });
+
+    svg.on("click", (event) => {
+        if (!markingMode) return;
+        const point = svg.point(event.clientX, event.clientY);
+
+        if (markingMode === "vertical") {
+            const x = closestPosition(point.x);
+            placedLines.line(x, 0, x, 600).stroke({ width: 1.5, color: "red" });
+            markedVertical = x;
+            markingMode = "horizontal";
+            previewLine.stroke({ color: "#2255ff", dasharray: "6,4" });
+        } else if (markingMode === "horizontal") {
+            const y = closestPosition(point.y);
+            placedLines.line(0, y, 600, y).stroke({ width: 1.5, color: "#2255ff" });
+            markingMode = null;
+            markedVertical = null;
+            previewLine.opacity(0);
+            markButton.innerText = "Mark Lines";
+        }
+
+        boxGroup.front();
+    });
+
+    // END: Grid Marking Feature
+
+
+
+
 
     const copyTransform = (transform) => ({
         cx: transform.cx,
