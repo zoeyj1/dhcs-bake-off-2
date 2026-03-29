@@ -88,8 +88,11 @@ window.addEventListener("load", () => {
         return gridPositions.reduce((a, b) => Math.abs(b - value) < Math.abs(a - value) ? b : a);
     };
 
-    let markingMode = null; // null, "vertical", "horizontal"
-    let markedVertical = null;
+    let drawLinesContent = {
+      markingMode: null, // null, "vertical", "horizontal", "complete"
+      verticalLine: null,
+      horizontalLine: null
+    }
 
     const previewLine = svg.line(0, 0, 0, 0)
         .stroke({ width: 1.5, color: "red", dasharray: "6,4" })
@@ -99,47 +102,55 @@ window.addEventListener("load", () => {
     boxGroup.front();
 
     markButton.addEventListener("click", () => {
-        if (markingMode !== null) {
-            markingMode = null;
-            markedVertical = null;
+        if (drawLinesContent.markingMode !== null) {
+            drawLinesContent.markingMode = null;
             previewLine.opacity(0);
             markButton.innerText = "Mark Lines";
             return;
         }
-        markingMode = "vertical";
+        drawLinesContent.verticalLine?.remove();
+        drawLinesContent.verticalLines = null;
+        drawLinesContent.horizontalLine?.remove();
+        drawLinesContent.horizontalLines = null;
+        drawLinesContent.markingMode = "vertical";
         markButton.innerText = "Cancel Marking";
     });
 
     svg.on("mousemove", (event) => {
-        if (!markingMode) return;
+        if (!drawLinesContent.markingMode) return;
         const point = svg.point(event.clientX, event.clientY);
 
-        if (markingMode === "vertical") {
+        if (drawLinesContent.markingMode === "vertical") {
             const x = closestPosition(point.x);
             previewLine.plot(x, 0, x, 600).stroke({ color: "red", dasharray: "6,4" }).opacity(1);
-        } else if (markingMode === "horizontal") {
+        } else if (drawLinesContent.markingMode === "horizontal") {
             const y = closestPosition(point.y);
             previewLine.plot(0, y, 600, y).stroke({ color: "#2255ff", dasharray: "6,4" }).opacity(1);
         }
     });
 
+
     svg.on("click", (event) => {
-        if (!markingMode) return;
+        if (!drawLinesContent.markingMode) return;
         const point = svg.point(event.clientX, event.clientY);
 
-        if (markingMode === "vertical") {
+        if (drawLinesContent.markingMode === "vertical") {
             const x = closestPosition(point.x);
-            placedLines.line(x, 0, x, 600).stroke({ width: 1.5, color: "red" });
-            markedVertical = x;
-            markingMode = "horizontal";
+            drawLinesContent.verticalLine = svg.line(x, 0, x, 600).stroke({ width: 1.5, color: "red" });
+            drawLinesContent.markingMode = "horizontal";
             previewLine.stroke({ color: "#2255ff", dasharray: "6,4" });
-        } else if (markingMode === "horizontal") {
+        } else if (drawLinesContent.markingMode === "horizontal") {
             const y = closestPosition(point.y);
-            placedLines.line(0, y, 600, y).stroke({ width: 1.5, color: "#2255ff" });
-            markingMode = null;
-            markedVertical = null;
+            drawLinesContent.horizontalLine = svg.line(0, y, 600, y).stroke({ width: 1.5, color: "#2255ff" });
+            drawLinesContent.markingMode = null;
             previewLine.opacity(0);
             markButton.innerText = "Mark Lines";
+        // } else if (drawLinesContent.markingMode === "complete") {
+        //   drawLinesContent.markingMode = "vertical";
+        //   drawLinesContent.verticalLine.remove();
+        //   drawLinesContent.verticalLine = null;
+        //   drawLinesContent.horizontalLine.remove();
+        //   drawLinesContent.horizontalLine = null;
         }
 
         boxGroup.front();
@@ -907,16 +918,143 @@ window.addEventListener("load", () => {
         };
     }
 
+
+    // i tried so hard to modify my code to your patterns but i am not that good of a programmer man.
+    // we're (i'm) cooked
+    function createThreeClickStrategy() {
+      // copied from 2 clicks, idrk whats happening here
+      const panel = document.createElement("div");
+      panel.className = "strategy-help hidden";
+      panel.innerText = "Three-Click: 1. Click first corner. 2. Click adjacent corner. 3. Move mouse to flip side 4. click to finish.";
+      strategyControlsHost.appendChild(panel);
+
+      // state machine
+      const state = {
+          active: false,
+          phase: "idle", // idle | first-point | second-point
+          p1: null,
+          p2: null,
+          line: null,
+          dot: [],
+      };
+
+      // basically, if no dots exist, draw one
+      // if one dot exist, draw a line from said dot to mouse
+      // if a line exists, draw the box
+      function onMouseDown(event) {
+        if (!state.active || event.button !== 0) return;
+        
+        const point = svg.point(event.clientX, event.clientY)
+
+        if (state.phase === "idle") {
+            state.p1 = point;
+            state.phase = "first-point";
+            let dot = svg.circle(4).center(state.p1.x, state.p1.y).fill('#ff0000');
+            state.dot.push(dot);
+            box.opacity(0.3).size(0, 0);
+            return;
+        }
+        
+        if (state.phase === "first-point") {
+            state.p2 = point;
+            let dot = svg.circle(4).center(state.p2.x, state.p2.y).fill('#ff0000');
+            state.line.remove();
+            state.line = svg.line(state.p1.x, state.p1.y, state.p2.x, state.p2.y).stroke({ width: 2, color: '#3300ff' });
+            state.phase = "second-point";
+            state.dot.push(dot);
+            return;
+        }
+
+        if (state.phase === "second-point") {
+            console.log("????");
+            state.phase = "idle";
+            state.p1 = null;
+            state.p2 = null;
+            state.line.remove();
+            state.dot.forEach(d => d.remove());
+            state.dot = [];
+            box.fill("#00ff59").opacity(1);
+            // box.draggable(true); // causeing problems i thinks, so i turn it off, dont really think users will want to use anyways
+        }
+    }
+
+    // if there exdists a first point, draw a line from said point to cursor
+    // if a line exists then figure out which side the user wants the box via mouse hover
+    function onMouseMove(event) {
+        if (!state.active || state.phase === "idle") return;
+
+        const pointer = eventToSvgPoint(event);
+
+        if (state.phase === "first-point") {
+            const dx = pointer.x - state.p1.x;
+            const dy = pointer.y - state.p1.y;
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            const sideLength = Math.sqrt(dx * dx + dy * dy);
+            state.line?.remove();
+            state.line = svg.line(state.p1.x, state.p1.y, pointer.x, pointer.y).stroke({ width: 2, color: '#9000ff' }).opacity(0.5);
+        }
+
+        if (state.phase === "second-point") {
+            const dx = state.p2.x - state.p1.x;
+            const dy = state.p2.y - state.p1.y;
+            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+            const sideLength = Math.sqrt(dx * dx + dy * dy);
+
+            // using cross product outside of physics and calc 3 goes hard
+            // core memeory made right here lmao
+            // right hand rule but opposite because the canvas y direction is weird as it typically is
+            const val = (state.p2.x - state.p1.x) * (pointer.y - state.p1.y) - 
+                        (pointer.x - state.p1.x) * (state.p2.y - state.p1.y);
+
+            if (val > 0) {
+                box.size(sideLength, sideLength)
+               .move(state.p1.x, state.p1.y)
+               .transform({ rotate: angle, 
+                            origin: [state.p1.x, state.p1.y] });
+            } else {
+                            box.size(sideLength, sideLength)
+               .move(state.p1.x, state.p1.y)
+               .transform({ rotate: angle + 180 + 90, 
+                            origin: [state.p1.x, state.p1.y]});
+            }
+        }
+    }
+
+    // copied from above
+    // hands in the air, i don't know enough about the design of this file or js
+    return {
+        activate() {
+            hideStrategyControls();
+            panel.classList.remove("hidden");
+            state.active = true;
+            state.phase = "idle";
+            svg.on("mousedown.threeclick", onMouseDown);
+            window.addEventListener("mousemove", onMouseMove);
+        },
+        deactivate() {
+            state.active = false;
+            panel.classList.add("hidden");
+            svg.off("mousedown.threeclick");
+            window.removeEventListener("mousemove", onMouseMove);
+        },
+        refresh() {}
+    };
+    
+  }
+
+
     const strategies = {
         direct: createDirectManipulationStrategy(),
         sliders: createSliderStrategy(),
         twoClick: createTwoClickStrategy(),
+        threeClick: createThreeClickStrategy(),
     };
 
     const strategyList = [
         { id: "direct", label: "Direct Manipulation" },
         { id: "sliders", label: "Sliders" },
         { id: "twoClick", label: "Two-Click Placement" },
+        { id: "threeClick", label: "Three-Click Placement" },
     ];
 
     strategyList.forEach((strategy) => {
