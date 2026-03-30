@@ -669,10 +669,24 @@ window.addEventListener("load", () => {
 
     // resets everything so the user can pick a fresh strategy
     function resetTaskSelectionState() {
-        deactivateActiveStrategy();
+        deactivateActiveStrategy();  
         hideStrategyControls();
         hideTrialSummary();
+        box.fill("#11eaea").opacity(0);  
         syncTransformFromBox();
+        taskReadyForSelection = true;
+        taskStrategyLocked = false;
+        setStatus("Select a strategy for this task.");
+        updateStrategyButtons();
+
+        // clear any marked lines from the previous task
+        drawLinesContent.verticalLine?.remove();
+        drawLinesContent.verticalLine = null;
+        drawLinesContent.horizontalLine?.remove();
+        drawLinesContent.horizontalLine = null;
+        drawLinesContent.markingMode = null;
+        previewLine.opacity(0);
+        markButton.innerText = "Mark Lines";
         taskReadyForSelection = true;
         taskStrategyLocked = false;
         setStatus("Select a strategy for this task.");
